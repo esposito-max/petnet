@@ -1,3 +1,5 @@
+// lib/pages/signup_page.dart
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../widgets/image_panel.dart';
@@ -44,7 +46,7 @@ class SignupPage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset('assets/pug_image.jpg', fit: BoxFit.cover),
+        Image.asset('assets/pug_image.png', fit: BoxFit.cover),
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -81,7 +83,7 @@ class SignupForm extends StatelessWidget {
       padding: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
       decoration: isMobile ? null : const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6EE087), Color(0xFF4C87B9)],
+          colors: [Color(0xFF6EE087), Color(0xFF4C87B9)], 
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -96,9 +98,12 @@ class SignupForm extends StatelessWidget {
           const SizedBox(height: 10),
           const Text('Crie a sua conta', style: TextStyle(color: Colors.white, fontSize: 16)),
           const SizedBox(height: 40),
+          
           TextField(
+            style: const TextStyle(color: Colors.black), // FIXED
             decoration: InputDecoration(
               hintText: 'Nome',
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.person, color: Colors.black54),
               filled: true,
               fillColor: Colors.white,
@@ -106,9 +111,12 @@ class SignupForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          
           TextField(
+            style: const TextStyle(color: Colors.black), // FIXED
             decoration: InputDecoration(
               hintText: 'Email',
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.email, color: Colors.black54),
               filled: true,
               fillColor: Colors.white,
@@ -116,10 +124,18 @@ class SignupForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          
           TextField(
             obscureText: true,
+            style: const TextStyle(color: Colors.black), // FIXED
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              // Mock signup logic: just go back to login
+              Navigator.pop(context);
+            },
             decoration: InputDecoration(
               hintText: 'Senha',
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.lock, color: Colors.black54),
               filled: true,
               fillColor: Colors.white,
@@ -127,10 +143,13 @@ class SignupForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
+          
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pop(context);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6EE087),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -140,6 +159,7 @@ class SignupForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          
           Center(
             child: Text.rich(
               TextSpan(

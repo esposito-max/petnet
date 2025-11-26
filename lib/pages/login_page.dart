@@ -1,7 +1,12 @@
+// lib/pages/login_page.dart
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart'; // Import the fake auth service
+import '../data/mock_database.dart';
+import '../models/user_model.dart';
 import '../widgets/image_panel.dart';
+import '../widgets/main_shell.dart';
+import 'timeline_page.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -24,7 +29,7 @@ class LoginPage extends StatelessWidget {
 
   Widget _buildDesktopLayout() {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 650),
+      constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 700),
       margin: const EdgeInsets.all(24),
       child: Card(
         elevation: 8.0,
@@ -45,7 +50,7 @@ class LoginPage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset('assets/pug_image.jpg', fit: BoxFit.cover),
+        Image.asset('assets/pug_image.png', fit: BoxFit.cover),
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -72,15 +77,67 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-class LoginForm extends StatelessWidget {
+class LoginForm extends StatefulWidget {
   final bool isMobile;
   const LoginForm({super.key, this.isMobile = false});
 
   @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _dbService = MockDatabaseService();
+  
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    final User? user = await _dbService.login(email, password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (user != null && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainShell(
+            currentRouteName: '/timeline',
+            userType: user.userType, 
+            child: const TimelinePage(),
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = "Email ou senha incorretos.";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
-      decoration: isMobile
+      padding: widget.isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
+      decoration: widget.isMobile
           ? null
           : const BoxDecoration(
               gradient: LinearGradient(
@@ -92,16 +149,22 @@ class LoginForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset('assets/petnet_logo.jpeg', height: 32),
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
           const Text('Bem-vindo\nde volta', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, height: 1.2)),
           const SizedBox(height: 10),
           const Text('Estamos felizes em te ver.', style: TextStyle(color: Colors.white, fontSize: 16)),
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
+          
           TextField(
+            controller: _emailController,
+            style: const TextStyle(color: Colors.black), // FIXED: Explicit text color
+            textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: 'Email',
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.email, color: Colors.black54),
               filled: true,
               fillColor: Colors.white,
@@ -109,40 +172,51 @@ class LoginForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          
           TextField(
+            controller: _passwordController,
             obscureText: true,
+            style: const TextStyle(color: Colors.black), // FIXED: Explicit text color
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _handleLogin(), // FIXED: Enter key works now
             decoration: InputDecoration(
               hintText: 'Senha',
+              hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.lock, color: Colors.black54),
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
           ),
+          
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              ),
+            ),
+
           const SizedBox(height: 30),
+          
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () async {
-                final authService = FakeAuthService();
-                final bool isLoggedIn = await authService.fakeSignIn();
-
-                // Check if the widget is still in the tree before navigating
-                if (isLoggedIn && context.mounted) {
-                  // Use pushReplacementNamed to go to the timeline and prevent the user
-                  // from pressing the back button to return to the login screen.
-                  Navigator.pushReplacementNamed(context, '/timeline');
-                }
-              },
+              onPressed: _isLoading ? null : _handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4C87B9),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('ENTRAR', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: _isLoading 
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('ENTRAR', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ),
+          
           const SizedBox(height: 20),
+          
           Center(
             child: Text.rich(
               TextSpan(
@@ -157,6 +231,39 @@ class LoginForm extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+
+          const SizedBox(height: 30),
+          const Divider(color: Colors.white54),
+          const SizedBox(height: 10),
+          const Center(
+            child: Text(
+              'Quer ser um parceiro?',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/signup-ngo'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: const Text(
+                  'Sou uma ONG',
+                  style: TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white54)),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/signup-provider'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: const Text(
+                  'Sou Profissional',
+                  style: TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
         ],
       ),

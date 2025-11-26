@@ -1,18 +1,23 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'pages/adocao_page.dart';
-import 'providers/theme_provider.dart'; // Import Provider
+import 'models/user_type.dart'; // Import Enum
+import 'providers/theme_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
+import 'pages/signup_provider_page.dart';
+import 'pages/signup_ngo_page.dart';
 import 'pages/timeline_page.dart';
 import 'pages/marketplace_page.dart';
 import 'pages/servicos_page.dart';
 import 'pages/ongs_page.dart';
+import 'pages/adocao_page.dart';
+import 'pages/dashboard_page.dart';
 import 'widgets/main_shell.dart';
 
 void main() {
   runApp(
-    // IMPORTANT: Provide the ThemeProvider above MyApp
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
       child: const MyApp(),
@@ -29,13 +34,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access the ThemeProvider
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
       title: 'Petnet App',
       debugShowCheckedModeBanner: false,
-      // IMPORTANT: Use themeMode from the provider
       themeMode: themeProvider.themeMode,
       theme: ThemeData(
         brightness: Brightness.light,
@@ -44,10 +47,8 @@ class MyApp extends StatelessWidget {
           seedColor: primaryColor,
           brightness: Brightness.light,
           secondary: accentColorGreen,
-          // You might want specific colors for light theme here
         ),
         useMaterial3: true,
-        // Add other light theme customizations if needed
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -56,31 +57,93 @@ class MyApp extends StatelessWidget {
           seedColor: primaryColor,
           brightness: Brightness.dark,
           secondary: accentColorGreen,
-          // Adjust dark theme specific colors if needed
-          // background: Colors.black, // Example
-          // surface: Colors.grey[850], // Example
         ),
         useMaterial3: true,
-        // Add other dark theme customizations
       ),
-      initialRoute: '/login', // Starts at login
+      initialRoute: '/login',
+      // We keep the static routes for auth pages
       routes: {
-        // Auth Routes (don't use MainShell)
         '/login': (context) => LoginPage(),
         '/signup': (context) => SignupPage(),
+        '/signup-ngo': (context) => const SignupNGOPage(),
+        '/signup-provider': (context) => const SignupProviderPage(),
+      },
+      // We use onGenerateRoute for dynamic pages that need UserType
+      onGenerateRoute: (settings) {
+        // Extract the UserType argument passed from Navigator
+        // If no argument is passed (e.g. during dev), default to client
+        final UserType userType = (settings.arguments as UserType?) ?? UserType.client;
 
-        // App Shell Routes
-        '/timeline': (context) => const MainShell( currentRouteName: '/timeline', child: TimelinePage(), ),
-        '/marketplace': (context) => const MainShell( currentRouteName: '/marketplace', child: MarketplacePage(), ),
-        '/adocao': (context) => const MainShell( currentRouteName: '/adocao', child: AdocaoPage(), ),
-        '/servicos': (context) => const MainShell( currentRouteName: '/servicos', child: ServicosPage(), ),
-         '/ongs': (context) => const MainShell( currentRouteName: '/ongs', child: ONGsPage(), ),
-        // Placeholders for other routes
-        '/explorar': (context) => const MainShell(currentRouteName: '/explorar', child: Center(child: Text('Explorar Page'))),
-        '/amigos': (context) => const MainShell(currentRouteName: '/amigos', child: Center(child: Text('Amigos Page'))),
-        '/grupos': (context) => const MainShell(currentRouteName: '/grupos', child: Center(child: Text('Grupos Page'))),
-        '/problema': (context) => const MainShell(currentRouteName: '/problema', child: Center(child: Text('Relatar Problema Page'))),
-        '/atividade': (context) => const MainShell(currentRouteName: '/atividade', child: Center(child: Text('Sua Atividade Page'))),
+        switch (settings.name) {
+          case '/timeline':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/timeline',
+                userType: userType,
+                child: const TimelinePage(),
+              ),
+            );
+          case '/marketplace':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/marketplace',
+                userType: userType,
+                child: const MarketplacePage(),
+              ),
+            );
+          case '/adocao':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/adocao',
+                userType: userType,
+                child: const AdocaoPage(),
+              ),
+            );
+          case '/servicos':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/servicos',
+                userType: userType,
+                child: const ServicosPage(),
+              ),
+            );
+          case '/ongs':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/ongs',
+                userType: userType,
+                child: const ONGsPage(),
+              ),
+            );
+          case '/dashboard':
+            return MaterialPageRoute(
+              builder: (_) => MainShell(
+                currentRouteName: '/dashboard',
+                userType: userType,
+                child: DashboardPage(userType: userType), // Pass type to dashboard too
+              ),
+            );
+          // Placeholders
+          case '/explorar':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/explorar', userType: userType, child: const Center(child: Text('Explorar Page'))));
+          case '/amigos':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/amigos', userType: userType, child: const Center(child: Text('Amigos Page'))));
+          case '/grupos':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/grupos', userType: userType, child: const Center(child: Text('Grupos Page'))));
+          case '/problema':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/problema', userType: userType, child: const Center(child: Text('Relatar Problema Page'))));
+          case '/atividade':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/atividade', userType: userType, child: const Center(child: Text('Sua Atividade Page'))));
+          case '/ads':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/ads', userType: userType, child: const Center(child: Text('Comprar Anúncios'))));
+          case '/manage-products':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/manage-products', userType: userType, child: const Center(child: Text('Gerenciar Produtos'))));
+          case '/manage-campaigns':
+            return MaterialPageRoute(builder: (_) => MainShell(currentRouteName: '/manage-campaigns', userType: userType, child: const Center(child: Text('Gerenciar Campanhas'))));
+          
+          default:
+            return null; // Let Flutter handle unknown routes
+        }
       },
     );
   }

@@ -1,15 +1,20 @@
+// lib/widgets/main_shell.dart
+
 import 'package:flutter/material.dart';
+import '../models/user_type.dart';
 import 'nav_drawer.dart';
 import 'nav_rail.dart';
 
 class MainShell extends StatefulWidget {
   final Widget child;
   final String currentRouteName;
+  final UserType userType;
 
   const MainShell({
     super.key,
     required this.child,
     required this.currentRouteName,
+    this.userType = UserType.client, 
   });
 
   @override
@@ -72,16 +77,16 @@ class _MainShellState extends State<MainShell> {
         child: _CustomAppBar(onSettingsTap: _showSettingsDialog),
       ),
       drawer: _isMobile(context)
-          ? NavDrawer(currentRouteName: widget.currentRouteName)
+          ? NavDrawer(currentRouteName: widget.currentRouteName, userType: widget.userType)
           : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 1200) {
             return Row(
               children: [
-                NavRail(currentRouteName: widget.currentRouteName),
+                NavRail(currentRouteName: widget.currentRouteName, userType: widget.userType),
                 const VerticalDivider(width: 1),
-                Expanded(child: widget.child), // <-- Content goes here
+                Expanded(child: widget.child),
                 const VerticalDivider(width: 1),
                 const SizedBox(width: 300, child: _RightSidebar()),
               ],
@@ -89,13 +94,13 @@ class _MainShellState extends State<MainShell> {
           } else if (constraints.maxWidth > 800) {
             return Row(
               children: [
-                NavRail(currentRouteName: widget.currentRouteName),
+                NavRail(currentRouteName: widget.currentRouteName, userType: widget.userType),
                 const VerticalDivider(width: 1),
-                Expanded(child: widget.child), // <-- Content goes here
+                Expanded(child: widget.child),
               ],
             );
           } else {
-            return widget.child; // <-- Content goes here
+            return widget.child;
           }
         },
       ),
@@ -107,7 +112,6 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-// All the private widgets from timeline_page are now here
 class _CustomAppBar extends StatelessWidget {
   final VoidCallback onSettingsTap;
   const _CustomAppBar({required this.onSettingsTap});
@@ -116,6 +120,7 @@ class _CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 800;
     final theme = Theme.of(context);
+    
     return AppBar(
       title: Text('petnet', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
       centerTitle: isMobile,
@@ -147,9 +152,44 @@ class _CustomAppBar extends StatelessWidget {
         const SizedBox(width: 10),
         IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_outlined)),
         IconButton(onPressed: onSettingsTap, icon: const Icon(Icons.settings_outlined)),
-        const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(child: Icon(Icons.person)),
+        
+        // --- NEW: Profile Menu ---
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'logout' || value == 'switch_account') {
+                // Remove all routes and go back to login
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'switch_account',
+                child: Row(
+                  children: [
+                    Icon(Icons.switch_account, size: 20),
+                    SizedBox(width: 10),
+                    Text('Trocar conta'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 20),
+                    SizedBox(width: 10),
+                    Text('Sair'),
+                  ],
+                ),
+              ),
+            ],
+            offset: const Offset(0, 50), // Move menu down slightly
+            child: const CircleAvatar(
+              child: Icon(Icons.person),
+            ),
+          ),
         ),
         const SizedBox(width: 10),
       ],

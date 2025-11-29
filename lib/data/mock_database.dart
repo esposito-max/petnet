@@ -24,10 +24,10 @@ class MockDatabaseService {
     // CLIENT
     const User(
       id: 'client_01',
-      name: 'Ana Silva',
-      email: 'ana@email.com',
-      password: '#password', 
-      profileImageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+      name: 'Sofia Morgado',
+      email: 'morgado@email.com',
+      password: '#Morgado', 
+      profileImageUrl: 'assets/morgado.jpg',
       userType: UserType.client,
     ),
     // SERVICE PROVIDER
@@ -75,7 +75,7 @@ class MockDatabaseService {
         id: 'post_01',
         author: _users[0], // Ana
         text: 'Dia de levar a princesa para passear! 🐕',
-        imageUrl: 'https://images.unsplash.com/photo-1548681528-6a5c45b66b42?ixlib=rb-4.0.3&auto=format&fit=crop&w=387&q=80',
+        imageUrl: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?ixlib=rb-4.0.3&auto=format&fit=crop&w=394&q=80',
         timestamp: DateTime.now().subtract(const Duration(minutes: 6)),
       ),
       Post(
@@ -88,7 +88,7 @@ class MockDatabaseService {
         id: 'post_03',
         author: _users[2], // ONG
         text: 'Precisamos de doações de ração para nossos 50 gatinhos resgatados. Qualquer ajuda é bem-vinda!',
-        imageUrl: 'https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?ixlib=rb-4.0.3&auto=format&fit=crop&w=394&q=80',
+        imageUrl: 'https://images.unsplash.com/photo-1548681528-6a5c45b66b42?ixlib=rb-4.0.3&auto=format&fit=crop&w=387&q=80',
         timestamp: DateTime.now().subtract(const Duration(minutes: 18)),
       ),
     ];

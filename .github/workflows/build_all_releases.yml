@@ -1,3 +1,6 @@
+# .github/workflows/build_all_releases.yml
+# This is the single workflow file that builds and releases for all platforms.
+
 name: Build & Release All Platforms
 
 # This block defines environment variables available to all jobs.
@@ -87,8 +90,8 @@ jobs:
         with:
           name: android-build
           path: ${{ env.APP_NAME }}-${{ github.ref_name }}.apk
-          
-  # ------ JOB 4: BUILD FOR LINUX (REVISED) ------
+
+  # ------ JOB 4: BUILD FOR LINUX (FIXED) ------
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -107,13 +110,12 @@ jobs:
         run: flutter pub get
       - name: Build Linux executable
         run: flutter build linux --release
-      # This step activates the tool AND adds its location to the system path for the next steps
-      - name: Set up flutter_distributor
+      # Use full path to execute flutter_distributor to avoid PATH issues
+      - name: Create Linux packages (.deb and .rpm)
         run: |
           dart pub global activate flutter_distributor
-          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
-      - name: Create Linux packages (.deb and .rpm)
-        run: flutter_distributor package --platform linux --targets deb,rpm
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          $HOME/.pub-cache/bin/flutter_distributor package --platform linux --targets deb,rpm
       - name: Upload Linux DEB artifact
         uses: actions/upload-artifact@v4
         with:
@@ -127,29 +129,23 @@ jobs:
 
   # ------ JOB 5: CREATE THE FINAL GITHUB RELEASE ------
   create-release:
-    # This job only runs after all build jobs have successfully completed
     needs: [build-windows, build-macos, build-android, build-linux]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create a release
-      
+      contents: write
     steps:
-      # Download all the build files (artifacts) from the previous jobs
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      # Create a single GitHub Release and attach all the artifacts
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true # Creates a draft release, you must publish it manually
+          draft: true
           prerelease: false
-          name: Release ${{ github.ref_name }} # e.g., "Release v1.0.10"
+          name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
-          # This pattern finds all files in the downloaded artifact subfolders
           files: |
             artifacts/*/*
